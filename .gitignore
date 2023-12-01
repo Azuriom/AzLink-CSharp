@@ -1,0 +1,15 @@
+# JetBrains
+.idea/
+*.iml
+*.iws
+
+# Visual Studio Code
+.vscode/
+.history
+
+# Mac
+.DS_Store
+
+# .NET
+libs/
+obj/
