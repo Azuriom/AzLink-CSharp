@@ -11,10 +11,10 @@ namespace Oxide.Plugins;
 [Description("Link your Azuriom website with an Oxide server.")]
 class AzLink : CovalencePlugin
 {
-    private const string AzLinkVersion = "0.1.0";
+    private const string AzLinkVersion = "0.1.1";
 
-    private DateTime lastSent = DateTime.MinValue;
-    private DateTime lastFullSent = DateTime.MinValue;
+    private DateTime lastSent = DateTime.Now;
+    private DateTime lastFullSent = DateTime.Now;
 
     private void Init()
     {
@@ -92,22 +92,22 @@ class AzLink : CovalencePlugin
             return;
         }
 
-        if ((now - lastSent).Seconds < 15)
+        if ((now - lastSent).TotalSeconds < 15)
         {
             return;
         }
 
         lastSent = now;
 
-        var sendFull = now.Minute % 15 == 0 && (now - lastFullSent).Seconds > 60;
+        var full = now.Minute % 15 == 0 && (now - lastFullSent).TotalSeconds >= 60;
 
-        if (sendFull)
+        if (full)
         {
             lastFullSent = now;
         }
 
         RunFetch(res => DispatchCommands(res.Commands),
-            code => LogError("Unable to send data to the website (code {0})", code), sendFull);
+            code => LogError("Unable to send data to the website (code {0})", code), full);
     }
 
     private void RunFetch(Action<FetchResponse> callback, Action<int> errorHandler, bool sendFullData)
