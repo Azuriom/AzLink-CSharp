@@ -11,5 +11,7 @@
 .DS_Store
 
 # .NET
+bin/
 libs/
 obj/
+*.user

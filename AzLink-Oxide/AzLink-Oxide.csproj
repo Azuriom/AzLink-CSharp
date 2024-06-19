@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>Oxide.Plugins</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Reference Include="Oxide.Common">
+            <HintPath>libs\Oxide.Common.dll</HintPath>
+        </Reference>
+        <Reference Include="Oxide.Core">
+            <HintPath>libs\Oxide.Core.dll</HintPath>
+        </Reference>
+        <Reference Include="Oxide.CSharp">
+            <HintPath>libs\Oxide.CSharp.dll</HintPath>
+        </Reference>
+        <Reference Include="Oxide.References">
+            <HintPath>libs\Oxide.References.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+
+</Project>

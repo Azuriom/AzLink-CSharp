@@ -11,7 +11,7 @@ namespace Oxide.Plugins;
 [Description("Link your Azuriom website with an Oxide server.")]
 class AzLink : CovalencePlugin
 {
-    private const string AzLinkVersion = "0.1.1";
+    private const string AzLinkVersion = "1.0.0";
 
     private DateTime lastSent = DateTime.Now;
     private DateTime lastFullSent = DateTime.Now;
@@ -60,8 +60,6 @@ class AzLink : CovalencePlugin
 
         PingWebsite(() => player.Reply("Connected to the website successfully."),
             code => player.Reply($"An error occurred, code {code}"));
-
-        player.Reply("Connected to the website successfully.");
     }
 
     [Command("azlink.fetch"), Permission("azlink.fetch")]
@@ -184,11 +182,12 @@ class AzLink : CovalencePlugin
         var data = new Dictionary<string, object>
         {
             {
-                "platform", new Dictionary<string, string>()
+                "platform", new Dictionary<string, string>
                 {
                     { "type", "OXIDE" },
                     { "name", $"Oxide - {game}" },
                     { "version", server.Version },
+                    { "key", "uid" }
                 }
             },
             { "version", AzLinkVersion },
@@ -212,21 +211,21 @@ class AzLink : CovalencePlugin
             { "Azuriom-Link-Token", (string)Config["SiteKey"] },
             { "Accept", "application/json" },
             { "Content-type", "application/json" },
-            { "User-Agent", "AzLink Oxide v" + AzLinkVersion },
+            { "User-Agent", $"AzLink Oxide v{AzLinkVersion}" }
         };
     }
 }
 
 class FetchResponse
 {
-    [JsonProperty("commands")] public List<PendingCommand> Commands { get; set; }
+    [JsonProperty("commands")] public List<PendingCommand> Commands { get; set; } = new();
 }
 
 class PendingCommand
 {
-    [JsonProperty("uid")] public string UserId { get; set; }
+    [JsonProperty("uid")] public string UserId { get; set; } = "";
 
-    [JsonProperty("name")] public string UserName { get; set; }
+    [JsonProperty("name")] public string UserName { get; set; } = "";
 
-    [JsonProperty("values")] public List<string> Values { get; set; }
+    [JsonProperty("values")] public List<string> Values { get; set; } = new();
 }
