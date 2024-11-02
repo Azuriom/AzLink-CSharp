@@ -13,6 +13,8 @@ class AzLink : CovalencePlugin
 {
     private const string AzLinkVersion = "1.0.0";
 
+    private Dictionary<string, UserInfo> usersBySteamId = new();
+
     private DateTime lastSent = DateTime.Now;
     private DateTime lastFullSent = DateTime.Now;
 
@@ -79,6 +81,49 @@ class AzLink : CovalencePlugin
         }, code => player.Reply($"An error occurred, code {code}"), true);
     }
 
+    [Command("azlink.money.set"), Permission("azlink.money")]
+    private void MoneySetCommand(IPlayer player, string command, string[] args)
+    {
+        HandleMoneyCommand(player, "set", args);
+    }
+
+    [Command("azlink.money.add"), Permission("azlink.money")]
+    private void MoneyAddCommand(IPlayer player, string command, string[] args)
+    {
+        HandleMoneyCommand(player, "add", args);
+    }
+
+    [Command("azlink.money.remove"), Permission("azlink.money")]
+    private void MoneyRemoveCommand(IPlayer player, string command, string[] args)
+    {
+        HandleMoneyCommand(player, "remove", args);
+    }
+
+    private void HandleMoneyCommand(IPlayer player, string action, string[] args)
+    {
+        if (args.Length < 2)
+        {
+            player.Reply($"Usage: /azlink.money.{action} <player> <amount>");
+            return;
+        }
+
+        var targetPlayer = covalence.Players.FindPlayer(args[0]);
+
+        if (targetPlayer == null || !usersBySteamId.TryGetValue(targetPlayer.Id, out var user))
+        {
+            player.Reply($"Player '{args[0]}' not found.");
+            return;
+        }
+
+        if (!double.TryParse(args[1], out var amount) || amount < 0)
+        {
+            player.Reply($"'{args[1]}' is not a valid amount.");
+            return;
+        }
+
+        UpdateWebsiteBalance(player, user, action, amount);
+    }
+
     private void TryFetch()
     {
         var url = (string?)Config["URL"];
@@ -121,7 +166,14 @@ class AzLink : CovalencePlugin
                 return;
             }
 
-            callback(JsonConvert.DeserializeObject<FetchResponse>(response));
+            var res = JsonConvert.DeserializeObject<FetchResponse>(response);
+
+            foreach (var user in res.Users)
+            {
+                usersBySteamId[user.UserId] = user;
+            }
+
+            callback(res);
         }, this, RequestMethod.POST, GetRequestHeaders());
     }
 
@@ -145,6 +197,32 @@ class AzLink : CovalencePlugin
 
             onSuccess();
         }, this, RequestMethod.GET, GetRequestHeaders());
+    }
+
+    private void UpdateWebsiteBalance(IPlayer sender, UserInfo user, string action, double amount)
+    {
+        var url = (string?)Config["URL"];
+        var siteKey = (string?)Config["SiteKey"];
+
+        if (url == null || siteKey == null)
+        {
+            throw new ApplicationException("AzLink is not configured yet.");
+        }
+
+        var body = JsonConvert.SerializeObject(new { amount });
+
+        webrequest.Enqueue($"{url}/api/azlink/user/{user.Id}/money/{action}", body, (code, response) =>
+        {
+            if (code is < 200 or >= 300)
+            {
+                sender.Reply($"Unable to update the balance of {user.Name} (code {code})");
+                return;
+            }
+
+            var res = JsonConvert.DeserializeObject<EditMoneyResult>(response);
+
+            sender.Reply($"Successfully updated {user.Name}'s balance to {res.NewBalance}.");
+        }, this, RequestMethod.POST, GetRequestHeaders());
     }
 
     private void DispatchCommands(ICollection<PendingCommand> commands)
@@ -219,6 +297,8 @@ class AzLink : CovalencePlugin
 class FetchResponse
 {
     [JsonProperty("commands")] public List<PendingCommand> Commands { get; set; } = new();
+
+    [JsonProperty("users")] public List<UserInfo> Users { get; set; } = new();
 }
 
 class PendingCommand
@@ -228,4 +308,20 @@ class PendingCommand
     [JsonProperty("name")] public string UserName { get; set; } = "";
 
     [JsonProperty("values")] public List<string> Values { get; set; } = new();
+}
+
+class UserInfo
+{
+    [JsonProperty("id")] public string Id { get; set; } = "";
+
+    [JsonProperty("uid")] public string UserId { get; set; } = "";
+
+    [JsonProperty("name")] public string Name { get; set; } = "";
+
+    [JsonProperty("money")] public float UserBalance { get; set; } = 0;
+}
+
+class EditMoneyResult
+{
+    [JsonProperty("new_balance")] public double NewBalance { get; set; } = 0;
 }

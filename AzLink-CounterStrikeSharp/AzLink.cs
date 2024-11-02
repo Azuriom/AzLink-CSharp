@@ -131,12 +131,7 @@ public class AzLink : BasePlugin, IPluginConfig<AzLinkConfig>
 
     private void RunFetch(Action<FetchResponse> callback, Action<int> errorHandler, bool sendFullData)
     {
-        //Server.NextFrameAsync(() =>
-        //{
-        var data = GetServerData(sendFullData);
-
-        FetchAsync(callback, errorHandler, data);
-        //});
+        FetchAsync(callback, errorHandler, GetServerData(sendFullData));
     }
 
     private async void FetchAsync<T>(Action<FetchResponse> callback, Action<int> errorHandler, T data)
